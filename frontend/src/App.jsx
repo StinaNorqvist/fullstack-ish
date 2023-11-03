@@ -1,43 +1,123 @@
 import { useEffect, useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
 import "./App.css";
+import TrashIcon from "./Icons/TrashIcon";
+import DogIcon from "./Icons/DogIcon";
+import CatIcon from "./Icons/CatIcon";
 
 function App() {
-  const [count, setCount] = useState(0);
+  const [allPets, setALlPets] = useState([]);
+  const [newName, setName] = useState("");
+  const [newAge, setAge] = useState(null);
+  const [newSpecies, setSpecies] = useState("");
 
+  // FETCH ALL PETS
   useEffect(() => {
+    fetchAllPets();
+  }, []);
+
+  const fetchAllPets = () => {
     fetch("/api")
       .then((response) => response.json())
-      .then((result) => {
-        alert(`Hello ${result.hello}!`);
+      .then((data) => {
+        setALlPets(data);
       });
-  }, []);
+  };
+
+  // POST NEW PET TO BACKEND
+  const postNewPet = (newName, newAge, newSpecies) => {
+    const data = {
+      name: newName,
+      age: newAge,
+      species: newSpecies,
+    };
+    fetch("/api", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        setALlPets(data);
+        fetchAllPets();
+      })
+      .catch((error) => {
+        console.log(error, "Failed posting a new pet");
+      });
+  };
+
+  // DELETE A PET
+  const deletePet = (id) => {
+    fetch("/api", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ id }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        setALlPets(data);
+        fetchAllPets();
+      })
+      .catch((error) => {
+        console.log(error, `Failed to delete pet with id ${id}`);
+      });
+  };
 
   return (
     <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
+      <div className="inputContainer">
+        <div className="headerContainer">
+          <DogIcon />
+          <h1 className="firstHeader">Add a new pet</h1>
+          <CatIcon />
+        </div>
+
+        <input
+          placeholder="Name"
+          type="text"
+          onChange={(event) => setName(event.target.value)}
+        />
+        <input
+          placeholder="Age"
+          type="text"
+          onChange={(event) => setAge(event.target.value)}
+        />
+        <input
+          placeholder="Species"
+          type="text"
+          onChange={(event) => setSpecies(event.target.value)}
+        />
+
+        <button
+          type="submit"
+          className="addButton"
+          onClick={() => postNewPet(newName, newAge, newSpecies)}
+        >
+          Add a new pet
         </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+
+      <h1 className="secondHeader">Your pets</h1>
+      <div className="petContainer">
+        {allPets.map((pet) => (
+          <div key={pet.id} className="petDiv">
+            <p className="petName">{pet.name}</p>
+            <p className="petSpecies">{pet.species}</p>
+            <p className="petAge">{pet.age} years old</p>
+            <button
+              className="trashButton"
+              key={pet.id}
+              onClick={() => deletePet(pet.id)}
+            >
+              <TrashIcon />
+            </button>
+          </div>
+        ))}
+      </div>
     </>
   );
 }
-
 export default App;
